@@ -1,53 +1,65 @@
-from flask import Flask, request, render_template, send_from_directory
+from flask import Flask, render_template, request, send_file
 import os
 from pydub import AudioSegment
-import noisereduce as nr
 import tempfile
 
 app = Flask(__name__)
 
-# Folder to store uploaded and processed files
+# Create the necessary directories for uploaded and processed files
 UPLOAD_FOLDER = 'uploads'
 PROCESSED_FOLDER = 'processed_files'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(PROCESSED_FOLDER, exist_ok=True)
 
-# Route to render the upload form
+# Configuring the upload folder
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
 @app.route('/')
 def index():
-    return render_template('upload.html')
+    return render_template('upload.html')  # Render the upload page
 
-# Route to handle the uploaded audio, process it, and save the cleaned version
 @app.route('/process-audio', methods=['POST'])
 def process_audio():
     if 'audio_file' not in request.files:
-        return 'No file part', 400
-
+        return "No file part", 400
+    
     audio_file = request.files['audio_file']
+    
     if audio_file.filename == '':
-        return 'No selected file', 400
+        return "No selected file", 400
+    
+    if audio_file:
+        # Save the uploaded file to the uploads folder
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], audio_file.filename)
+        audio_file.save(file_path)
 
-    # Save the uploaded file temporarily
-    temp_file = tempfile.NamedTemporaryFile(delete=False)
-    audio_file.save(temp_file.name)
-    temp_file_path = temp_file.name
+        # Now process the audio (this is where the magic happens, like noise removal, enhancement)
+        processed_audio_path = process_audio_file(file_path)
 
-    # Process the audio (noise reduction)
-    audio = AudioSegment.from_file(temp_file_path)
-    audio_samples = audio.get_array_of_samples()
-    cleaned_audio = nr.reduce_noise(y=audio_samples)
+        # Render the download page and pass the processed file's path
+        return render_template('download.html', filename=processed_audio_path)
 
-    # Save the cleaned audio
-    processed_path = os.path.join(PROCESSED_FOLDER, 'processed_audio.wav')
-    cleaned_audio.export(processed_path, format='wav')
+def process_audio_file(file_path):
+    """Process the uploaded audio file and save the cleaned file."""
+    try:
+        # Open the uploaded audio file using PyDub
+        audio = AudioSegment.from_file(file_path)
 
-    # Return the download link for the cleaned file
-    return render_template('download.html', processed_file=processed_path)
+        # Here you can add audio processing (like noise removal, volume enhancement, etc.)
+        # For this example, let's just export the same file with no changes (you can add more processing here)
+        processed_file_path = os.path.join(PROCESSED_FOLDER, 'processed_audio.wav')
+        
+        # Export the audio as a WAV file (you can also change the format to mp3, etc.)
+        audio.export(processed_file_path, format="wav")
 
-# Route to allow the user to download the processed audio file
-@app.route('/processed_files/<filename>')
+        return processed_file_path
+    except Exception as e:
+        return f"An error occurred during audio processing: {str(e)}"
+
+@app.route('/download/<filename>')
 def download_file(filename):
-    return send_from_directory(PROCESSED_FOLDER, filename)
+    """Allow the user to download the processed audio file."""
+    return send_file(os.path.join(PROCESSED_FOLDER, filename), as_attachment=True)
 
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+if __name__ == "__main__":
+    app.run(debug=True)
