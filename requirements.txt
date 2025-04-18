@@ -1,0 +1,7 @@
+Flask
+pydub
+scipy
+noisereduce
+torch
+torchaudio
+demucs
