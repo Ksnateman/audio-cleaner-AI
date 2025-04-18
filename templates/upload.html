@@ -1,16 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Upload Audio</title>
 </head>
 <body>
-    <h1>Upload Your Audio File for Cleaning</h1>
+    <h1>Upload Your Audio File</h1>
     <form action="/process-audio" method="POST" enctype="multipart/form-data">
-        <label for="audio_file">Choose an audio file to clean:</label>
-        <input type="file" name="audio_file" id="audio_file" required>
-        <button type="submit">Upload and Clean</button>
+        <input type="file" name="audio_file" required>
+        <button type="submit">Upload & Clean</button>
     </form>
 </body>
 </html>
