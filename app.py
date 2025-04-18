@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, send_from_directory
 import os
-app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 1GB
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 1 GB Limit
 
 app = Flask(__name__)
 
